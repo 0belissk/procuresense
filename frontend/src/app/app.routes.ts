@@ -2,6 +2,6 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent, title: 'ProcureSense – Health' },
+  { path: '', component: HomeComponent, title: 'ProcureSense – Dashboard' },
   { path: '**', redirectTo: '' }
 ];

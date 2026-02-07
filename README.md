@@ -68,7 +68,14 @@ curl -X POST http://localhost:8080/api/purchases/demo/load \
   -H 'X-Role: admin'
 ```
 
-The response returns total orders, line items, quantity, and revenue. Use `GET /api/purchases/summary` for a read-only check.
+The response returns `{ orgId, importedRows }` so you can confirm the load succeeded quickly. Use `GET /api/purchases/summary` to read the derived totals, date range, and `lastLoadedAt` timestamp for that org.
+
+### Demo datasets
+
+- `data/demo_products.csv` – `sku`, `name`, `category`, `unit_price`. This is the lookup table the backend uses to ensure bundle/reorder responses can render friendly product labels.
+- `data/demo_purchases.csv` – `order_id`, `sku`, `quantity`, `unit_price`, `purchased_at`. Identity headers supply the org, so the CSV only carries immutable facts. The file purposely contains multi-item orders and at least five SKUs with repeated purchase intervals to feed the reorder + bundle heuristics.
+
+Loading the demo data should yield `totalOrders=15`, `totalLineItems=27`, `totalQuantity=310`, `totalRevenue=7724.20`, `totalSkus=12`, and a `dateRange` of `2024-04-01T10:15:00Z` → `2024-04-22T16:45:00Z`. `lastLoadedAt` reflects when you last ran the loader/import for that org. If these numbers drift, the heuristics and unit tests will no longer match expectations.
 
 ## Smoke Test Checklist
 
@@ -91,7 +98,20 @@ curl http://localhost:8080/api/purchases/summary \
   -H 'X-Role: admin'
 ```
 
-Expect the `totalOrders` field to be `9` after loading demo data.
+Expect the `totalOrders` field to be `15` after loading demo data.
+
+## Uploading Purchase CSVs
+
+Use the `/api/purchases/upload` endpoint when you have your own purchase history CSV. The `file` field must contain UTF-8 CSV data with these headers (case-insensitive): `order_id`, `sku`, `product_name`, `category`, `quantity`, `unit_price`, `purchased_at` (ISO-8601 timestamp).
+
+```bash
+curl -X POST http://localhost:8080/api/purchases/upload \
+  -H 'X-Org-Id: demo-org' \
+  -H 'X-Role: admin' \
+  -F file=@purchases.csv
+```
+
+The response returns `{importedRows, rejectedRows, sampleErrors[]}` so you can confirm whether any rows failed validation without halting the whole import.
 
 ## Branching Strategy
 
@@ -105,6 +125,13 @@ Every PR must answer "What changed?" and "How was it tested?" via the PR templat
 
 - All API requests **must** send both `X-Org-Id` and `X-Role`. The backend rejects calls missing either header (health endpoints included).
 - Never ship `OPENAI_API_KEY` or other secrets in the frontend bundle. Treat `.env` + Docker secrets as backend-only.
+- Sprint 3 features call the OpenAI Responses API from the backend only. Set `OPENAI_API_KEY=<key>` and `OPENAI_ENABLED=true` in `.env` (or your shell) to turn on live explanations; otherwise the system returns deterministic fallback text so the demo remains reliable without network access.
+
+## AI Explanations + Fallbacks
+
+- Reorder predictions now include a short explanation sourced from OpenAI when enabled.
+- The backend never asks AI to compute cadence/dates—those values are calculated in Java and passed to the prompt.
+- When OpenAI is disabled or errors, ProcureSense emits a deterministic explanation highlighting the cadence, last purchase, predicted date, and confidence so the UI and judges always see informative text.
 
 ## Local Configuration Notes
 

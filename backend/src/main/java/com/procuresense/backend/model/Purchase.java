@@ -13,6 +13,9 @@ public class Purchase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "org_id", nullable = false, length = 100)
+    private String orgId;
+
     @Column(name = "order_id", nullable = false)
     private String orderId;
 
@@ -35,6 +38,14 @@ public class Purchase {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getOrgId() {
+        return orgId;
+    }
+
+    public void setOrgId(String orgId) {
+        this.orgId = orgId;
     }
 
     public String getOrderId() {

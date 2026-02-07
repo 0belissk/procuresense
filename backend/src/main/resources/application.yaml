@@ -5,6 +5,9 @@ spring:
     default: dev
   jackson:
     time-zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 logging:
   level:
@@ -25,3 +28,11 @@ demo:
   data:
     products-file: file:../data/demo_products.csv
     purchases-file: file:../data/demo_purchases.csv
+
+openai:
+  enabled: ${OPENAI_ENABLED:false}
+  api-key: ${OPENAI_API_KEY:}
+  base-url: https://api.openai.com/v1
+  model: gpt-4o-mini
+  temperature: 0.2
+  max-output-tokens: 150
