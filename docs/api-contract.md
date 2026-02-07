@@ -123,6 +123,80 @@ X-Role: admin
 }
 ```
 
+## Reorder Predictions
+
+**GET `/api/purchases/insights/reorders?limit=20`**
+
+Returns deterministic reorder insights sorted by urgency for the acting org. Requires at least two purchases per SKU to appear. The backend computes the cadence and predicted date; confidence reflects interval stability. Each prediction now includes a short `explanation` string that comes from OpenAI (or a deterministic fallback when AI is disabled).
+
+```http
+GET /api/purchases/insights/reorders?limit=3 HTTP/1.1
+X-Org-Id: demo-org
+X-Role: buyer
+```
+
+```json
+[
+  {
+    "orgId": "demo-org",
+    "sku": "SKU-1001",
+    "productName": "Eco Paper Towels",
+    "lastPurchaseAt": "2024-04-10T09:45:00Z",
+    "medianDaysBetween": 10,
+    "predictedReorderAt": "2024-04-20T09:45:00Z",
+    "confidence": 0.85,
+    "explanation": "Eco Paper Towels usually need replenishment every 10 days; the last order was Apr 10 so plan for the next one near Apr 20 (5 days away, 85% confidence)."
+  },
+  {
+    "orgId": "demo-org",
+    "sku": "SKU-1012",
+    "productName": "Warehouse Gloves (10)",
+    "lastPurchaseAt": "2024-04-10T09:47:00Z",
+    "medianDaysBetween": 8,
+    "predictedReorderAt": "2024-04-18T09:47:00Z",
+    "confidence": 0.72,
+    "explanation": "Gloves are purchased roughly every 8 days; with the last shipment on Apr 10 the cadence points to Apr 18 (3 days out, 72% confidence)."
+  }
+]
+```
+
+If fewer than `limit` predictions exist, the endpoint returns all of them. An empty array indicates the org lacks sufficient purchase history.
+
+## Bundle Recommendations
+
+**GET `/api/purchases/insights/bundles/{sku}?limit=5`**
+
+Returns the top co-purchased SKUs for the selected item, scoped to `X-Org-Id`. The backend counts how often the selected SKU appears in the same order (or same purchase day when order IDs are missing) with other SKUs.
+
+```http
+GET /api/purchases/insights/bundles/SKU-1001?limit=3 HTTP/1.1
+X-Org-Id: demo-org
+X-Role: buyer
+```
+
+```json
+[
+  {
+    "orgId": "demo-org",
+    "sku": "SKU-1001",
+    "relatedSku": "SKU-1012",
+    "relatedName": "Warehouse Gloves (10)",
+    "coPurchaseCount": 4,
+    "rationale": "Gloves and towels are pulled together for aisle resets."
+  },
+  {
+    "orgId": "demo-org",
+    "sku": "SKU-1001",
+    "relatedSku": "SKU-1008",
+    "relatedName": "Heavy Duty Tape",
+    "coPurchaseCount": 3,
+    "rationale": "Maintenance carts pair tape with wipes for return processing."
+  }
+]
+```
+
+An empty array indicates the org does not have enough co-purchase history for the requested SKU. The `limit` parameter caps how many related SKUs are returned.
+
 ### Future Considerations
 
 - All Sprint 1–3 endpoints must keep the `X-Org-Id`/`X-Role` contract.

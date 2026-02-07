@@ -1,6 +1,7 @@
 package com.procuresense.backend.repository;
 
 import com.procuresense.backend.model.Purchase;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -34,4 +35,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     @Query("select max(p.purchasedAt) from Purchase p where p.orgId = :orgId")
     OffsetDateTime findLastPurchaseDate(@Param("orgId") String orgId);
+
+    @EntityGraph(attributePaths = "product")
+    java.util.List<Purchase> findByOrgIdOrderByProductSkuAscPurchasedAtAsc(String orgId);
 }

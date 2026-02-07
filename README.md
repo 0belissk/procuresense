@@ -125,6 +125,13 @@ Every PR must answer "What changed?" and "How was it tested?" via the PR templat
 
 - All API requests **must** send both `X-Org-Id` and `X-Role`. The backend rejects calls missing either header (health endpoints included).
 - Never ship `OPENAI_API_KEY` or other secrets in the frontend bundle. Treat `.env` + Docker secrets as backend-only.
+- Sprint 3 features call the OpenAI Responses API from the backend only. Set `OPENAI_API_KEY=<key>` and `OPENAI_ENABLED=true` in `.env` (or your shell) to turn on live explanations; otherwise the system returns deterministic fallback text so the demo remains reliable without network access.
+
+## AI Explanations + Fallbacks
+
+- Reorder predictions now include a short explanation sourced from OpenAI when enabled.
+- The backend never asks AI to compute cadence/dates—those values are calculated in Java and passed to the prompt.
+- When OpenAI is disabled or errors, ProcureSense emits a deterministic explanation highlighting the cadence, last purchase, predicted date, and confidence so the UI and judges always see informative text.
 
 ## Local Configuration Notes
 

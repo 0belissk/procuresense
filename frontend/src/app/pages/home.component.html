@@ -1,25 +1,180 @@
-<section class="hero">
-  <div>
-    <p class="eyebrow">Sprint 0</p>
-    <h1>ProcureSense Health Monitor</h1>
-    <p class="lead">
-      Verify the Spring Boot API is reachable before building new features. The
-      Angular shell pings <code>/api/health</code> using the shared identity headers.
-    </p>
-    <div class="actions">
-      <button class="primary" (click)="retry()" [disabled]="isLoading()">
-        {{ isLoading() ? 'Checking…' : 'Re-check Health' }}
-      </button>
-      <span class="checked" *ngIf="lastChecked()">
-        Last checked {{ lastChecked() }}
-      </span>
+<div class="dashboard-shell">
+  <section class="controls-card">
+    <div class="identity-controls">
+      <label>
+        <span>Organization</span>
+        <select [value]="selectedOrg()" (change)="selectOrg($event.target.value)">
+          <option *ngFor="let option of orgOptions" [value]="option">{{ option }}</option>
+        </select>
+      </label>
+      <label>
+        <span>Role</span>
+        <select [value]="selectedRole()" (change)="selectRole($event.target.value)">
+          <option *ngFor="let option of roleOptions" [value]="option">{{ option }}</option>
+        </select>
+      </label>
     </div>
-  </div>
-</section>
+    <div class="action-buttons">
+      <button type="button" class="ghost" (click)="simulateUpload()">Upload CSV</button>
+      <button type="button" class="primary" (click)="loadDemoData()" [disabled]="isLoadingDemo()">
+        {{ isLoadingDemo() ? 'Loading…' : 'Load Demo Data' }}
+      </button>
+    </div>
+  </section>
 
-<section class="status-card">
-  <div class="status-row">
-    <span class="badge" [ngClass]="statusBadgeClass()">{{ message() }}</span>
+  <section class="status-row">
+    <span class="pill muted" *ngIf="!hasData() && !isLoadingDemo()">No data loaded for {{ selectedOrg() }} — headers update automatically.</span>
+    <span class="pill info" *ngIf="isLoadingDemo()">Preparing demo inventory…</span>
+    <span class="pill success" *ngIf="hasData() && !isLoadingDemo()">Demo data refreshed {{ lastLoadedAt() }}</span>
+    <span class="pill note" *ngIf="infoMessage()">{{ infoMessage() }}</span>
+  </section>
+
+  <section class="content-grid">
+    <div class="panel reorder-panel">
+      <header>
+        <div>
+          <p class="eyebrow">Step 1</p>
+          <h2>Reorder Predictions</h2>
+        </div>
+        <p class="subcopy">Ranked by urgency. Select a row to view details and bundle ideas.</p>
+      </header>
+      <ng-container *ngIf="tableLoading(); else reorderContent">
+        <div class="loading-state">Fetching reorder predictions…</div>
+      </ng-container>
+      <ng-template #reorderContent>
+        <ng-container *ngIf="tableError(); else tableData">
+          <div class="empty-state">
+            <p class="title">Unable to load predictions</p>
+            <p>{{ tableError() }}</p>
+          </div>
+        </ng-container>
+        <ng-template #tableData>
+          <ng-container *ngIf="hasData(); else reorderEmpty">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Item</th>
+                    <th>Days</th>
+                    <th>Predicted Date</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of reorderRows(); trackBy: rowTrack" (click)="selectRow(row)" [class.selected]="isSelected(row)">
+                    <td>{{ row.sku }}</td>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.daysUntil }}</td>
+                    <td>{{ row.predictedDate }}</td>
+                    <td>
+                      <span class="confidence">{{ row.confidence | number:'1.0-2' }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
+        </ng-template>
+      </ng-template>
+    </div>
+
+    <div class="right-column">
+      <div class="panel detail-panel">
+        <header>
+          <div>
+            <p class="eyebrow">Step 2</p>
+            <h3>Item Detail</h3>
+          </div>
+          <p class="subcopy">Context for the selected prediction.</p>
+        </header>
+        <ng-container *ngIf="selectedRow(); else detailEmpty">
+          <div class="detail-grid">
+            <div>
+              <p class="label">SKU</p>
+              <p class="value">{{ selectedRow()!.sku }}</p>
+            </div>
+            <div>
+              <p class="label">Name</p>
+              <p class="value">{{ selectedRow()!.name }}</p>
+            </div>
+            <div>
+              <p class="label">Last Purchase</p>
+              <p class="value">{{ selectedRow()!.lastPurchase }}</p>
+            </div>
+            <div>
+              <p class="label">Predicted Date</p>
+              <p class="value">{{ selectedRow()!.predictedDate }}</p>
+            </div>
+            <div>
+              <p class="label">Cadence</p>
+              <p class="value">{{ selectedRow()!.cadence }}</p>
+            </div>
+            <div>
+              <p class="label">Confidence</p>
+              <p class="value">{{ selectedRow()!.confidence | percent:'1.0-0' }}</p>
+            </div>
+          </div>
+          <p class="explanation">{{ selectedRow()!.explanation }}</p>
+        </ng-container>
+      </div>
+
+      <div class="panel bundle-panel">
+        <header>
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h3>Often Bought Together</h3>
+          </div>
+          <p class="subcopy">Bundle items to keep carts full.</p>
+        </header>
+        <ng-container *ngIf="bundleLoading(); else bundleContent">
+          <div class="loading-state">Loading bundle recommendations…</div>
+        </ng-container>
+        <ng-template #bundleContent>
+          <ng-container *ngIf="bundleError(); else bundleList">
+            <div class="empty-state compact">
+              <p class="title">Bundle lookup failed</p>
+              <p>{{ bundleError() }}</p>
+            </div>
+          </ng-container>
+          <ng-template #bundleList>
+            <ng-container *ngIf="bundlesForSelection().length; else bundleEmpty">
+              <div class="bundle-list">
+                <article class="bundle-card" *ngFor="let bundle of bundlesForSelection(); trackBy: bundleTrack">
+                  <div>
+                    <p class="bundle-sku">{{ bundle.relatedSku }}</p>
+                    <p class="bundle-name">{{ bundle.relatedName }}</p>
+                  </div>
+                  <p class="bundle-count">{{ bundle.count }} co-purchases</p>
+                  <p class="bundle-rationale">{{ bundle.rationale }}</p>
+                </article>
+              </div>
+            </ng-container>
+          </ng-template>
+        </ng-template>
+      </div>
+    </div>
+  </section>
+</div>
+
+<ng-template #reorderEmpty>
+  <div class="empty-state">
+    <p class="title">No predictions yet</p>
+    <p>Load demo data or upload a CSV to populate the dashboard.</p>
   </div>
-  <p *ngIf="details()" class="details">{{ details() }}</p>
-</section>
+</ng-template>
+
+<ng-template #detailEmpty>
+  <div class="empty-state compact">
+    <p>Select a reorder suggestion to view cadence and explanation.</p>
+  </div>
+</ng-template>
+
+<ng-template #bundleEmpty>
+  <div class="empty-state compact">
+    <p *ngIf="selectedSku(); else bundlePrompt">No bundle recommendations for {{ selectedRow()?.name ?? 'this item' }}.</p>
+    <ng-template #bundlePrompt>
+      <p>Select a reorder suggestion to preview bundle ideas.</p>
+    </ng-template>
+  </div>
+</ng-template>
