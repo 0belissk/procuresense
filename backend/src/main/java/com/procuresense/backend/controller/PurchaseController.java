@@ -72,12 +72,13 @@ public class PurchaseController {
     public ResponseEntity<List<ReorderPrediction>> reorders(
             @RequestHeader("X-Org-Id") @NotBlank String orgId,
             @RequestHeader("X-Role") @NotBlank String role,
-            @RequestParam(name = "limit", defaultValue = "20") int limit) {
+            @RequestParam(name = "limit", defaultValue = "20") int limit,
+            @RequestHeader(value = "X-Use-Cached-AI", defaultValue = "false") boolean useCachedAi) {
         List<ReorderPrediction> predictions = reorderInsightService.computePredictions(orgId);
         if (limit > 0 && predictions.size() > limit) {
             predictions = predictions.subList(0, limit);
         }
-        List<ReorderPrediction> enriched = reorderExplanationService.enrich(predictions);
+        List<ReorderPrediction> enriched = reorderExplanationService.enrich(predictions, useCachedAi);
         return ResponseEntity.ok(enriched);
     }
 
@@ -86,8 +87,9 @@ public class PurchaseController {
             @RequestHeader("X-Org-Id") @NotBlank String orgId,
             @RequestHeader("X-Role") @NotBlank String role,
             @PathVariable("sku") String sku,
-            @RequestParam(name = "limit", defaultValue = "5") int limit) {
-        List<BundleRecommendation> bundles = bundleRecommendationService.getBundlesForSku(orgId, sku);
+            @RequestParam(name = "limit", defaultValue = "5") int limit,
+            @RequestHeader(value = "X-Use-Cached-AI", defaultValue = "false") boolean useCachedAi) {
+        List<BundleRecommendation> bundles = bundleRecommendationService.getBundlesForSku(orgId, sku, useCachedAi);
         if (limit > 0 && bundles.size() > limit) {
             bundles = bundles.subList(0, limit);
         }

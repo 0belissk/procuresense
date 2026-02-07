@@ -32,12 +32,16 @@ public class ReorderExplanationService {
     }
 
     public List<ReorderPrediction> enrich(List<ReorderPrediction> predictions) {
+        return enrich(predictions, false);
+    }
+
+    public List<ReorderPrediction> enrich(List<ReorderPrediction> predictions, boolean cacheOnly) {
         return predictions.stream()
-                .map(this::attachExplanation)
+                .map(prediction -> attachExplanation(prediction, cacheOnly))
                 .collect(Collectors.toList());
     }
 
-    private ReorderPrediction attachExplanation(ReorderPrediction prediction) {
+    private ReorderPrediction attachExplanation(ReorderPrediction prediction, boolean cacheOnly) {
         long daysUntil = calculateDaysUntil(prediction.predictedReorderAt());
         String fingerprint = fingerprint(prediction);
         String cached = lookupCachedExplanation(prediction, fingerprint);
@@ -45,6 +49,9 @@ public class ReorderExplanationService {
             return prediction.withExplanation(cached);
         }
         String fallback = fallbackExplanation(prediction, daysUntil);
+        if (cacheOnly) {
+            return prediction.withExplanation(fallback);
+        }
         String explanation = openAiClient.generateReorderExplanation(prediction, daysUntil)
                 .orElse(fallback);
         persistInsight(prediction, explanation, fingerprint);

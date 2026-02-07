@@ -3,6 +3,7 @@
 ## Headers (required on all requests)
 - `X-Org-Id`
 - `X-Role`
+- `X-Use-Cached-AI` (optional demo header). When `true`, the backend skips live OpenAI requests and falls back to cached or deterministic explanations/rationales so demos remain reliable without network access.
 
 ## Reorder Predictions
 - `GET /api/purchases/insights/reorders?limit=20`

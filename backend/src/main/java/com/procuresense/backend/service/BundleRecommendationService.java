@@ -39,6 +39,10 @@ public class BundleRecommendationService {
     }
 
     public List<BundleRecommendation> getBundlesForSku(String orgId, String sku) {
+        return getBundlesForSku(orgId, sku, false);
+    }
+
+    public List<BundleRecommendation> getBundlesForSku(String orgId, String sku, boolean cacheOnly) {
         if (!StringUtils.hasText(orgId) || !StringUtils.hasText(sku)) {
             return List.of();
         }
@@ -88,11 +92,15 @@ public class BundleRecommendationService {
 
         return counts.values().stream()
                 .sorted((a, b) -> Long.compare(b.count, a.count))
-                .map(stats -> buildRecommendation(orgId, normalizedSku, primaryName, stats))
+                .map(stats -> buildRecommendation(orgId, normalizedSku, primaryName, stats, cacheOnly))
                 .collect(Collectors.toList());
     }
 
-    private BundleRecommendation buildRecommendation(String orgId, String sku, String skuName, BundleStats stats) {
+    private BundleRecommendation buildRecommendation(String orgId,
+                                                     String sku,
+                                                     String skuName,
+                                                     BundleStats stats,
+                                                     boolean cacheOnly) {
         String fingerprint = sku + "|" + stats.relatedSku + "|" + stats.count;
         String rationale = bundleInsightRepository.findByOrgIdAndSkuAndRelatedSku(orgId, sku, stats.relatedSku)
                 .filter(insight -> fingerprint.equals(insight.getFingerprint()))
@@ -100,32 +108,34 @@ public class BundleRecommendationService {
                     log.debug("Bundle rationale cache hit for org={} sku={} related={}", orgId, sku, stats.relatedSku);
                     return insight.getRationaleText();
                 })
-                .orElseGet(() -> generateRationale(orgId, sku, skuName, stats.relatedSku, stats.relatedName, stats.count, fingerprint));
+                .orElseGet(() -> generateRationale(orgId, sku, skuName, stats, fingerprint, cacheOnly));
         return new BundleRecommendation(orgId, sku, stats.relatedSku, stats.relatedName, stats.count, rationale);
     }
 
     private String generateRationale(String orgId,
                                      String sku,
                                      String skuName,
-                                     String relatedSku,
-                                     String relatedName,
-                                     long count,
-                                     String fingerprint) {
-        String promptFriendlyName = StringUtils.hasText(relatedName) ? relatedName : relatedSku;
+                                     BundleStats stats,
+                                     String fingerprint,
+                                     boolean cacheOnly) {
+        String promptFriendlyName = StringUtils.hasText(stats.relatedName) ? stats.relatedName : stats.relatedSku;
         String primaryFriendlyName = StringUtils.hasText(skuName) ? skuName : sku;
         String fallback = String.format("%s is ordered alongside %s in %d historical orders, so stocking them together prevents misses.",
-                promptFriendlyName, primaryFriendlyName, count);
-        String generated = openAiClient.generateBundleRationale(sku, primaryFriendlyName, relatedSku, promptFriendlyName, count)
+                promptFriendlyName, primaryFriendlyName, stats.count);
+        if (cacheOnly) {
+            return fallback;
+        }
+        String generated = openAiClient.generateBundleRationale(sku, primaryFriendlyName, stats.relatedSku, promptFriendlyName, stats.count)
                 .orElse(fallback);
         if (!openAiClient.isEnabled()) {
-            log.debug("OpenAI disabled; using deterministic bundle rationale for org={} sku={} related={}", orgId, sku, relatedSku);
+            log.debug("OpenAI disabled; using deterministic bundle rationale for org={} sku={} related={}", orgId, sku, stats.relatedSku);
         }
-        BundleInsight insight = bundleInsightRepository.findByOrgIdAndSkuAndRelatedSku(orgId, sku, relatedSku)
+        BundleInsight insight = bundleInsightRepository.findByOrgIdAndSkuAndRelatedSku(orgId, sku, stats.relatedSku)
                 .orElseGet(BundleInsight::new);
         insight.setOrgId(orgId);
         insight.setSku(sku);
-        insight.setRelatedSku(relatedSku);
-        insight.setCoPurchaseCount(count);
+        insight.setRelatedSku(stats.relatedSku);
+        insight.setCoPurchaseCount(stats.count);
         insight.setRationaleText(generated);
         insight.setFingerprint(fingerprint);
         bundleInsightRepository.save(insight);

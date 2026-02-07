@@ -33,7 +33,7 @@ public class AssistantService {
         this.openAiClient = openAiClient;
     }
 
-    public AssistantChatResponse handleChat(String orgId, AssistantChatRequest request) {
+    public AssistantChatResponse handleChat(String orgId, AssistantChatRequest request, boolean cacheOnly) {
         if (!StringUtils.hasText(orgId)) {
             throw new IllegalArgumentException("X-Org-Id header is required");
         }
@@ -43,7 +43,9 @@ public class AssistantService {
                 .limit(PROMPT_CATALOG_LIMIT)
                 .toList();
 
-        Optional<AssistantChatResponse> aiResponse = openAiClient.generateAssistantResponse(
+        Optional<AssistantChatResponse> aiResponse = cacheOnly
+                ? Optional.empty()
+                : openAiClient.generateAssistantResponse(
                 request.message(),
                 request.context(),
                 promptCatalog);
