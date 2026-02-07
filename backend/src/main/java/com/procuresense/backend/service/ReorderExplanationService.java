@@ -1,6 +1,8 @@
 package com.procuresense.backend.service;
 
+import com.procuresense.backend.model.ReorderInsight;
 import com.procuresense.backend.model.ReorderPrediction;
+import com.procuresense.backend.repository.ReorderInsightRepository;
 import com.procuresense.backend.service.ai.OpenAiClient;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,10 +21,14 @@ public class ReorderExplanationService {
 
     private final OpenAiClient openAiClient;
     private final Clock clock;
+    private final ReorderInsightRepository reorderInsightRepository;
 
-    public ReorderExplanationService(OpenAiClient openAiClient, Clock clock) {
+    public ReorderExplanationService(OpenAiClient openAiClient,
+                                     Clock clock,
+                                     ReorderInsightRepository reorderInsightRepository) {
         this.openAiClient = openAiClient;
         this.clock = clock;
+        this.reorderInsightRepository = reorderInsightRepository;
     }
 
     public List<ReorderPrediction> enrich(List<ReorderPrediction> predictions) {
@@ -33,15 +39,48 @@ public class ReorderExplanationService {
 
     private ReorderPrediction attachExplanation(ReorderPrediction prediction) {
         long daysUntil = calculateDaysUntil(prediction.predictedReorderAt());
+        String fingerprint = fingerprint(prediction);
+        String cached = lookupCachedExplanation(prediction, fingerprint);
+        if (StringUtils.hasText(cached)) {
+            return prediction.withExplanation(cached);
+        }
         String fallback = fallbackExplanation(prediction, daysUntil);
         String explanation = openAiClient.generateReorderExplanation(prediction, daysUntil)
                 .orElse(fallback);
+        persistInsight(prediction, explanation, fingerprint);
         return prediction.withExplanation(explanation);
+    }
+
+    private String lookupCachedExplanation(ReorderPrediction prediction, String fingerprint) {
+        return reorderInsightRepository.findByOrgIdAndSku(prediction.orgId(), prediction.sku())
+                .filter(insight -> fingerprint.equals(insight.getFingerprint()))
+                .map(ReorderInsight::getExplanationText)
+                .orElse(null);
+    }
+
+    private void persistInsight(ReorderPrediction prediction, String explanation, String fingerprint) {
+        ReorderInsight insight = reorderInsightRepository.findByOrgIdAndSku(prediction.orgId(), prediction.sku())
+                .orElseGet(ReorderInsight::new);
+        insight.setOrgId(prediction.orgId());
+        insight.setSku(prediction.sku());
+        insight.setLastPurchaseAt(prediction.lastPurchaseAt());
+        insight.setPredictedReorderAt(prediction.predictedReorderAt());
+        insight.setMedianDaysBetween(prediction.medianDaysBetween());
+        insight.setConfidence(prediction.confidence());
+        insight.setExplanationText(explanation);
+        insight.setFingerprint(fingerprint);
+        reorderInsightRepository.save(insight);
     }
 
     private long calculateDaysUntil(OffsetDateTime predicted) {
         long days = Duration.between(OffsetDateTime.now(clock), predicted).toDays();
         return Math.max(0, days);
+    }
+
+    private String fingerprint(ReorderPrediction prediction) {
+        return prediction.orgId() + "|" + prediction.sku() + "|" +
+                prediction.lastPurchaseAt() + "|" + prediction.predictedReorderAt() + "|" +
+                prediction.medianDaysBetween() + "|" + String.format("%.2f", prediction.confidence());
     }
 
     private String fallbackExplanation(ReorderPrediction prediction, long daysUntil) {
