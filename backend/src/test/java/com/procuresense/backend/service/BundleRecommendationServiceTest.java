@@ -2,6 +2,7 @@ package com.procuresense.backend.service;
 
 import com.procuresense.backend.model.BundleRecommendation;
 import com.procuresense.backend.model.Product;
+import com.procuresense.backend.repository.BundleInsightRepository;
 import com.procuresense.backend.repository.ProductRepository;
 import com.procuresense.backend.repository.PurchaseLoadAuditRepository;
 import com.procuresense.backend.repository.PurchaseRepository;
@@ -33,11 +34,15 @@ class BundleRecommendationServiceTest {
     @Autowired
     private PurchaseLoadAuditRepository purchaseLoadAuditRepository;
 
+    @Autowired
+    private BundleInsightRepository bundleInsightRepository;
+
     @BeforeEach
     void setup() {
         purchaseRepository.deleteAll();
         productRepository.deleteAll();
         purchaseLoadAuditRepository.deleteAll();
+        bundleInsightRepository.deleteAll();
     }
 
     @Test
@@ -63,17 +68,20 @@ class BundleRecommendationServiceTest {
                 .filter(r -> r.relatedSku().equals("SKU-2001"))
                 .findFirst().orElseThrow();
         assertThat(wipesToBins.coPurchaseCount()).isEqualTo(2);
+        assertThat(wipesToBins.rationale()).contains("Eco Wipes").contains("Storage Bins");
 
         BundleRecommendation wipesToTape = wipesBundles.stream()
                 .filter(r -> r.relatedSku().equals("SKU-4001"))
                 .findFirst().orElseThrow();
         assertThat(wipesToTape.coPurchaseCount()).isEqualTo(1); // fallback same-day grouping
+        assertThat(wipesToTape.rationale()).contains("Eco Wipes").contains("Packing Tape");
 
         List<BundleRecommendation> binsBundles = bundleRecommendationService.getBundlesForSku("demo-org-a", "SKU-2001");
         BundleRecommendation binsToGloves = binsBundles.stream()
                 .filter(r -> r.relatedSku().equals("SKU-3001"))
                 .findFirst().orElseThrow();
         assertThat(binsToGloves.coPurchaseCount()).isEqualTo(1);
+        assertThat(binsToGloves.rationale()).isNotBlank();
     }
 
     private Product saveProduct(String sku, String name) {

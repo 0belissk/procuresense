@@ -20,3 +20,4 @@ build/
 .idea/
 *.iml
 out/
+backend/.env.local

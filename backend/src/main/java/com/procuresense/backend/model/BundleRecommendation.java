@@ -4,5 +4,6 @@ public record BundleRecommendation(String orgId,
                                    String sku,
                                    String relatedSku,
                                    String relatedName,
-                                   long coPurchaseCount) {
+                                   long coPurchaseCount,
+                                   String rationale) {
 }
