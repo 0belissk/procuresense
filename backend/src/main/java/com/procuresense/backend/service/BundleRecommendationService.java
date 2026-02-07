@@ -1,8 +1,13 @@
 package com.procuresense.backend.service;
 
+import com.procuresense.backend.model.BundleInsight;
 import com.procuresense.backend.model.BundleRecommendation;
 import com.procuresense.backend.model.Purchase;
+import com.procuresense.backend.repository.BundleInsightRepository;
 import com.procuresense.backend.repository.PurchaseRepository;
+import com.procuresense.backend.service.ai.OpenAiClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,10 +24,18 @@ import java.util.stream.Collectors;
 @Service
 public class BundleRecommendationService {
 
-    private final PurchaseRepository purchaseRepository;
+    private static final Logger log = LoggerFactory.getLogger(BundleRecommendationService.class);
 
-    public BundleRecommendationService(PurchaseRepository purchaseRepository) {
+    private final PurchaseRepository purchaseRepository;
+    private final BundleInsightRepository bundleInsightRepository;
+    private final OpenAiClient openAiClient;
+
+    public BundleRecommendationService(PurchaseRepository purchaseRepository,
+                                       BundleInsightRepository bundleInsightRepository,
+                                       OpenAiClient openAiClient) {
         this.purchaseRepository = purchaseRepository;
+        this.bundleInsightRepository = bundleInsightRepository;
+        this.openAiClient = openAiClient;
     }
 
     public List<BundleRecommendation> getBundlesForSku(String orgId, String sku) {
@@ -31,13 +44,23 @@ public class BundleRecommendationService {
         }
         String normalizedSku = sku.trim();
         List<Purchase> purchases = purchaseRepository.findByOrgIdOrderByProductSkuAscPurchasedAtAsc(orgId);
+        String primaryName = purchases.stream()
+                .map(Purchase::getProduct)
+                .filter(Objects::nonNull)
+                .filter(product -> StringUtils.hasText(product.getSku()))
+                .filter(product -> normalizedSku.equalsIgnoreCase(product.getSku()))
+                .map(product -> StringUtils.hasText(product.getName()) ? product.getName() : normalizedSku)
+                .findFirst()
+                .orElse(normalizedSku);
         Map<String, List<Purchase>> orders = purchases.stream()
                 .collect(Collectors.groupingBy(this::orderKey, LinkedHashMap::new, Collectors.toList()));
 
         Map<String, BundleStats> counts = new HashMap<>();
         for (List<Purchase> orderPurchases : orders.values()) {
             boolean containsSku = orderPurchases.stream()
-                    .anyMatch(p -> normalizedSku.equalsIgnoreCase(p.getProduct().getSku()));
+                    .anyMatch(p -> p.getProduct() != null
+                            && StringUtils.hasText(p.getProduct().getSku())
+                            && normalizedSku.equalsIgnoreCase(p.getProduct().getSku()));
             if (!containsSku) {
                 continue;
             }
@@ -65,8 +88,48 @@ public class BundleRecommendationService {
 
         return counts.values().stream()
                 .sorted((a, b) -> Long.compare(b.count, a.count))
-                .map(stats -> new BundleRecommendation(orgId, normalizedSku, stats.relatedSku, stats.relatedName, stats.count))
+                .map(stats -> buildRecommendation(orgId, normalizedSku, primaryName, stats))
                 .collect(Collectors.toList());
+    }
+
+    private BundleRecommendation buildRecommendation(String orgId, String sku, String skuName, BundleStats stats) {
+        String fingerprint = sku + "|" + stats.relatedSku + "|" + stats.count;
+        String rationale = bundleInsightRepository.findByOrgIdAndSkuAndRelatedSku(orgId, sku, stats.relatedSku)
+                .filter(insight -> fingerprint.equals(insight.getFingerprint()))
+                .map(insight -> {
+                    log.debug("Bundle rationale cache hit for org={} sku={} related={}", orgId, sku, stats.relatedSku);
+                    return insight.getRationaleText();
+                })
+                .orElseGet(() -> generateRationale(orgId, sku, skuName, stats.relatedSku, stats.relatedName, stats.count, fingerprint));
+        return new BundleRecommendation(orgId, sku, stats.relatedSku, stats.relatedName, stats.count, rationale);
+    }
+
+    private String generateRationale(String orgId,
+                                     String sku,
+                                     String skuName,
+                                     String relatedSku,
+                                     String relatedName,
+                                     long count,
+                                     String fingerprint) {
+        String promptFriendlyName = StringUtils.hasText(relatedName) ? relatedName : relatedSku;
+        String primaryFriendlyName = StringUtils.hasText(skuName) ? skuName : sku;
+        String fallback = String.format("%s is ordered alongside %s in %d historical orders, so stocking them together prevents misses.",
+                promptFriendlyName, primaryFriendlyName, count);
+        String generated = openAiClient.generateBundleRationale(sku, primaryFriendlyName, relatedSku, promptFriendlyName, count)
+                .orElse(fallback);
+        if (!openAiClient.isEnabled()) {
+            log.debug("OpenAI disabled; using deterministic bundle rationale for org={} sku={} related={}", orgId, sku, relatedSku);
+        }
+        BundleInsight insight = bundleInsightRepository.findByOrgIdAndSkuAndRelatedSku(orgId, sku, relatedSku)
+                .orElseGet(BundleInsight::new);
+        insight.setOrgId(orgId);
+        insight.setSku(sku);
+        insight.setRelatedSku(relatedSku);
+        insight.setCoPurchaseCount(count);
+        insight.setRationaleText(generated);
+        insight.setFingerprint(fingerprint);
+        bundleInsightRepository.save(insight);
+        return generated;
     }
 
     private String orderKey(Purchase purchase) {

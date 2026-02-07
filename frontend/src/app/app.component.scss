@@ -34,10 +34,21 @@
     }
   }
 
-  nav a {
-    text-decoration: none;
-    color: #4338ca;
-    font-weight: 600;
+  nav {
+    display: flex;
+    gap: 1rem;
+
+    a {
+      text-decoration: none;
+      color: #4338ca;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    a.active {
+      background: rgba(99, 102, 241, 0.15);
+    }
   }
 }
 

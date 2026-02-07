@@ -23,4 +23,7 @@ backend/.settings/
 
 # IDE
 .idea/
+*.iml
+out/
+backend/.env.local
 .vscode/

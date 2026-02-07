@@ -1,0 +1,94 @@
+<div class="assistant-shell">
+  <section class="assistant-hero">
+    <div>
+      <p class="eyebrow">Guided Purchase Assistant</p>
+      <h1>Describe a scenario. Get a structured shopping list.</h1>
+      <p class="subcopy">Identity headers are already attached for {{ orgId() }} ({{ role() }}). Responses prefer cached kits if OpenAI is unavailable.</p>
+      <div class="hero-actions">
+        <button type="button" class="ghost" (click)="applySamplePrompt()">Try sample prompt</button>
+        <button type="button" class="ghost" (click)="clearTranscript()">Clear conversation</button>
+      </div>
+    </div>
+    <div class="status-pill" *ngIf="showFallbackIndicator()">Cached AI mode active</div>
+  </section>
+
+  <section class="assistant-grid">
+    <article class="conversation-panel">
+      <header>
+        <h2>Conversation</h2>
+        <p *ngIf="isLoading()" class="loading">Generating reply…</p>
+      </header>
+      <div class="transcript" [class.loading]="isLoading()">
+        <div class="message" *ngFor="let msg of conversation(); trackBy: trackMessage" [class.assistant]="msg.role === 'ASSISTANT'" [class.user]="msg.role === 'USER'" [class.system]="msg.role === 'SYSTEM'" [class.fallback]="msg.variant === 'fallback'" [class.error]="msg.variant === 'error'">
+          <div class="meta">
+            <span class="role">{{ msg.role === 'USER' ? 'You' : msg.role === 'ASSISTANT' ? 'ProcureSense' : 'System' }}</span>
+            <span class="timestamp">{{ msg.timestamp }}</span>
+          </div>
+          <p>{{ msg.text }}</p>
+        </div>
+      </div>
+      <div class="input-panel">
+        <label>
+          <span>Scenario</span>
+          <textarea rows="3" placeholder="Describe the project or scenario" [ngModel]="scenario()" (ngModelChange)="scenario.set($event)"></textarea>
+        </label>
+        <div class="context-fields">
+          <label>
+            <span>Selected SKU (optional)</span>
+            <input type="text" placeholder="SKU-1002" [ngModel]="selectedSku()" (ngModelChange)="selectedSku.set($event)" />
+          </label>
+          <label>
+            <span>Org Type</span>
+            <select [ngModel]="selectedOrgType()" (ngModelChange)="selectedOrgType.set($event)">
+              <option value="distribution">Distribution</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="education">Education</option>
+              <option value="hospitality">Hospitality</option>
+            </select>
+          </label>
+          <label>
+            <span>Project Type</span>
+            <select [ngModel]="selectedProjectType()" (ngModelChange)="selectedProjectType.set($event)">
+              <option value="warehouse setup">Warehouse setup</option>
+              <option value="office restock">Office restock</option>
+              <option value="event support">Event support</option>
+              <option value="expansion">Expansion</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-actions">
+          <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+          <button type="button" class="ghost" (click)="applySamplePrompt()">Use sample text</button>
+          <button type="button" class="primary" (click)="sendPrompt()" [disabled]="isLoading() || !scenario().trim()">{{ isLoading() ? 'Thinking…' : 'Send to Assistant' }}</button>
+        </div>
+      </div>
+    </article>
+
+    <article class="shopping-panel">
+      <header>
+        <div>
+          <p class="eyebrow">Shopping List</p>
+          <h2>Structured kit output</h2>
+        </div>
+        <p class="subcopy">Every SKU is validated by the backend before display.</p>
+      </header>
+      <div *ngIf="shoppingList().length; else emptyList" class="shopping-list">
+        <article class="shopping-card" *ngFor="let item of shoppingList(); trackBy: trackItem">
+          <div class="card-head">
+            <p class="sku">{{ item.sku }}</p>
+            <p class="name">{{ item.name }}</p>
+          </div>
+          <p class="qty">Qty {{ item.qty }}</p>
+          <p class="reason">{{ item.reason }}</p>
+        </article>
+      </div>
+    </article>
+  </section>
+</div>
+
+<ng-template #emptyList>
+  <div class="empty-state">
+    <p class="title">No kit yet</p>
+    <p>Send a scenario to receive a structured shopping list.</p>
+  </div>
+</ng-template>

@@ -1,0 +1,257 @@
+.assistant-shell {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.assistant-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  h1 {
+    margin: 0.2rem 0 0.5rem;
+  }
+
+  .subcopy {
+    margin: 0 0 1rem;
+    color: #475569;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .status-pill {
+    background: #f97316;
+    color: white;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+}
+
+.assistant-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+.conversation-panel,
+.shopping-panel {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  .loading {
+    color: #2563eb;
+    font-weight: 600;
+  }
+}
+
+.transcript {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.message {
+  border-radius: 14px;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #f8fafc;
+
+  &.assistant {
+    background: #eef2ff;
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+
+  &.user {
+    background: #ecfccb;
+    border-color: rgba(132, 204, 22, 0.5);
+  }
+
+  &.system {
+    background: #fee2e2;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  &.fallback {
+    border-color: rgba(249, 115, 22, 0.6);
+  }
+
+  &.error {
+    border-color: rgba(248, 113, 113, 0.8);
+  }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #475569;
+    margin-bottom: 0.3rem;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.input-panel {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .context-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+
+    input,
+    select {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 0.5rem;
+      font-size: 0.95rem;
+    }
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 600;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .error {
+      color: #dc2626;
+      margin-right: auto;
+    }
+  }
+}
+
+.shopping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shopping-card {
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 1rem;
+  background: #f8fafc;
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .sku {
+    margin: 0;
+    font-weight: 700;
+    color: #4338ca;
+  }
+
+  .name {
+    margin: 0;
+    flex: 1;
+    text-align: right;
+  }
+
+  .qty {
+    margin: 0.4rem 0 0;
+    font-weight: 600;
+  }
+
+  .reason {
+    margin: 0.2rem 0 0;
+    color: #475569;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 16px;
+  background: rgba(226, 232, 240, 0.4);
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+
+  .title {
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+  }
+}
+
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 600;
+
+  &.primary {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+  }
+
+  &.ghost {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4338ca;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-width: 1024px) {
+  .assistant-grid {
+    grid-template-columns: 1fr;
+  }
+}
