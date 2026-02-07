@@ -6,6 +6,7 @@ import { IdentityService } from '../services/identity.service';
 interface ReorderRow {
   sku: string;
   name: string;
+  lastQuantity: number;
   predictedDate: string;
   daysUntil: number;
   confidence: number;
@@ -41,6 +42,7 @@ export class HomeComponent {
   readonly tableError = signal<string | null>(null);
   readonly bundleLoading = signal(false);
   readonly bundleError = signal<string | null>(null);
+  readonly viewMode = signal<'table' | 'chart'>('table');
 
   private readonly reorderRowsState = signal<ReorderRow[]>([]);
   readonly reorderRows = computed(() => this.reorderRowsState());
@@ -57,6 +59,14 @@ export class HomeComponent {
 
   private readonly bundleCardsState = signal<BundleCard[]>([]);
   readonly bundlesForSelection = computed(() => this.bundleCardsState());
+  readonly maxLastQuantity = computed(() => {
+    const rows = this.reorderRowsState();
+    if (!rows.length) {
+      return 1;
+    }
+    return Math.max(1, ...rows.map(row => row.lastQuantity ?? 0));
+  });
+  readonly chartRows = computed(() => this.reorderRowsState().slice(0, 10));
 
   readonly rowTrack = (_: number, row: ReorderRow) => row.sku;
   readonly bundleTrack = (_: number, bundle: BundleCard) => bundle.relatedSku;
@@ -123,6 +133,28 @@ export class HomeComponent {
     this.resetData('CSV upload UI coming soon. Demo data cleared so you can start from a clean slate.');
   }
 
+  toggleGraphView(mode: 'table' | 'chart'): void {
+    this.viewMode.set(mode);
+  }
+
+  barHeight(row: ReorderRow): number {
+    if (!row.lastQuantity) {
+      return 20;
+    }
+    const ratio = row.lastQuantity / this.maxLastQuantity();
+    return Math.max(10, 20 + ratio * 80);
+  }
+
+  barColor(row: ReorderRow): string {
+    return this.getConfidenceGradient(row.confidence);
+  }
+
+  private getConfidenceGradient(value: number): string {
+    const normalized = Math.max(0, Math.min(1, value));
+    const hue = Math.max(0, Math.min(120, normalized * 120));
+    return `hsl(${hue}, 80%, 40%)`;
+  }
+
   private resetData(message: string): void {
     if (this.isLoadingDemo() || this.tableLoading()) {
       return;
@@ -170,12 +202,13 @@ export class HomeComponent {
     return {
       sku: item.sku,
       name: item.productName,
+      lastQuantity: item.lastQuantity,
       predictedDate,
       daysUntil,
       confidence: item.confidence,
       lastPurchase,
       cadence: `${item.medianDaysBetween} day cadence`,
-      explanation: 'Explanations coming soon.'
+      explanation: item.explanation ?? 'This recommendation follows the cadence shown above.'
     };
   }
 

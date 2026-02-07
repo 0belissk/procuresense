@@ -45,12 +45,13 @@ public class ReorderInsightService {
                 continue;
             }
             long medianDays = median(intervals);
-            OffsetDateTime lastPurchase = skuPurchases.get(skuPurchases.size() - 1).getPurchasedAt();
+            Purchase mostRecent = skuPurchases.get(skuPurchases.size() - 1);
+            OffsetDateTime lastPurchase = mostRecent.getPurchasedAt();
             OffsetDateTime predictedReorder = lastPurchase.plusDays(medianDays);
             double confidence = computeConfidence(intervals);
             Product product = skuPurchases.get(0).getProduct();
             predictions.add(new ReorderPrediction(orgId, product.getSku(), product.getName(), lastPurchase,
-                    medianDays, predictedReorder, confidence, null));
+                    medianDays, predictedReorder, confidence, mostRecent.getQuantity(), null));
         }
         predictions.sort((a, b) -> {
             int cmp = a.predictedReorderAt().compareTo(b.predictedReorderAt());

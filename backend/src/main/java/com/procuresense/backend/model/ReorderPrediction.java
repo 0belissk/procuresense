@@ -9,10 +9,11 @@ public record ReorderPrediction(String orgId,
                                 long medianDaysBetween,
                                 OffsetDateTime predictedReorderAt,
                                 double confidence,
+                                long lastQuantity,
                                 String explanation) {
 
     public ReorderPrediction withExplanation(String explanationText) {
         return new ReorderPrediction(orgId, sku, productName, lastPurchaseAt, medianDaysBetween,
-                predictedReorderAt, confidence, explanationText);
+                predictedReorderAt, confidence, lastQuantity, explanationText);
     }
 }

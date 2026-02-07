@@ -36,7 +36,23 @@
           <p class="eyebrow">Step 1</p>
           <h2>Reorder Predictions</h2>
         </div>
-        <p class="subcopy">Ranked by urgency. Select a row to view details and bundle ideas.</p>
+        <p class="subcopy">
+          Ranked by urgency. <span class="urgency-note" title="Urgency is determined by how soon the next reorder is predicted.">Fewer days until predicted date = higher urgency.</span>
+        </p>
+        <div class="view-toggle">
+          <button type="button"
+                  [class.active-view]="viewMode() === 'table'"
+                  (click)="toggleGraphView('table')"
+                  aria-label="Table view">
+            &#x2630;
+          </button>
+          <button type="button"
+                  [class.active-view]="viewMode() === 'chart'"
+                  (click)="toggleGraphView('chart')"
+                  aria-label="Chart view">
+            &#x1F4C8;
+          </button>
+        </div>
       </header>
       <ng-container *ngIf="tableLoading(); else reorderContent">
         <div class="loading-state">Fetching reorder predictions…</div>
@@ -50,30 +66,34 @@
         </ng-container>
         <ng-template #tableData>
           <ng-container *ngIf="hasData(); else reorderEmpty">
-            <div class="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>SKU</th>
-                    <th>Item</th>
-                    <th>Days</th>
-                    <th>Predicted Date</th>
-                    <th>Confidence</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of reorderRows(); trackBy: rowTrack" (click)="selectRow(row)" [class.selected]="isSelected(row)">
-                    <td>{{ row.sku }}</td>
-                    <td>{{ row.name }}</td>
-                    <td>{{ row.daysUntil }}</td>
-                    <td>{{ row.predictedDate }}</td>
-                    <td>
-                      <span class="confidence">{{ row.confidence | number:'1.0-2' }}</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ng-container *ngIf="viewMode() === 'table'; else chartTemplate">
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Item</th>
+                      <th>Rank</th>
+                      <th>Days</th>
+                      <th>Predicted Date</th>
+                      <th>Confidence</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let row of reorderRows(); let i = index; trackBy: rowTrack" (click)="selectRow(row)" [class.selected]="isSelected(row)">
+                      <td>{{ row.sku }}</td>
+                      <td>{{ row.name }}</td>
+                      <td><span class="rank-pill" [class.top-rank]="i < 3">{{ i + 1 }}</span></td>
+                      <td>{{ row.daysUntil }}</td>
+                      <td>{{ row.predictedDate }}</td>
+                      <td>
+                        <span class="confidence">{{ row.confidence | number:'1.0-2' }}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </ng-container>
           </ng-container>
         </ng-template>
       </ng-template>
@@ -101,6 +121,10 @@
             <div>
               <p class="label">Last Purchase</p>
               <p class="value">{{ selectedRow()!.lastPurchase }}</p>
+            </div>
+            <div>
+              <p class="label">Quantity on last order</p>
+              <p class="value">{{ selectedRow()!.lastQuantity }}</p>
             </div>
             <div>
               <p class="label">Predicted Date</p>
@@ -161,6 +185,22 @@
   <div class="empty-state">
     <p class="title">No predictions yet</p>
     <p>Load demo data or upload a CSV to populate the dashboard.</p>
+  </div>
+</ng-template>
+
+<ng-template #chartTemplate>
+  <div class="chart-container">
+    <div class="y-axis-label">Stock Count</div>
+    <div class="chart-area">
+      <div class="bar-group" *ngFor="let row of chartRows(); trackBy: rowTrack" (click)="selectRow(row)" [class.selected]="isSelected(row)">
+        <div class="bar-fill" [style.height.%]="barHeight(row)" [style.background-color]="barColor(row)">
+          <span class="bar-value">{{ row.lastQuantity }}</span>
+        </div>
+        <div class="bar-label">
+          <span class="sku">{{ row.sku }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </ng-template>
 

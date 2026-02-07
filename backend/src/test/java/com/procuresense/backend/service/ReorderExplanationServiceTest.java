@@ -90,6 +90,7 @@ class ReorderExplanationServiceTest {
                 10,
                 OffsetDateTime.parse("2024-02-10T12:00:00Z"),
                 0.8,
+                4,
                 null
         );
     }
