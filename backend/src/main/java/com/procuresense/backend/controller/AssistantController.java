@@ -26,7 +26,8 @@ public class AssistantController {
     public ResponseEntity<AssistantChatResponse> chat(
             @RequestHeader("X-Org-Id") @NotBlank String orgId,
             @RequestHeader("X-Role") @NotBlank String role,
+            @RequestHeader(value = "X-Use-Cached-AI", defaultValue = "false") boolean useCachedAi,
             @Valid @RequestBody AssistantChatRequest request) {
-        return ResponseEntity.ok(assistantService.handleChat(orgId, request));
+        return ResponseEntity.ok(assistantService.handleChat(orgId, request, useCachedAi));
     }
 }

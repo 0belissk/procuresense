@@ -36,12 +36,28 @@
     gap: 0.75rem;
   }
 
+  .pill-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
   .status-pill {
-    background: #f97316;
-    color: white;
+    background: rgba(15, 23, 42, 0.1);
+    color: #0f172a;
     padding: 0.5rem 0.9rem;
     border-radius: 999px;
     font-weight: 600;
+
+    &.on {
+      background: rgba(16, 185, 129, 0.25);
+    }
+
+    &.warning {
+      background: #f97316;
+      color: white;
+    }
   }
 }
 

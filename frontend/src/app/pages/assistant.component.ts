@@ -3,6 +3,7 @@ import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AssistantService, AssistantChatResponseDto, ShoppingListItemDto, AssistantChatRequestDto } from '../services/assistant.service';
 import { IdentityService } from '../services/identity.service';
+import { DemoSettingsService } from '../services/demo-settings.service';
 
 interface ChatMessage {
   role: 'USER' | 'ASSISTANT' | 'SYSTEM';
@@ -40,9 +41,11 @@ export class AssistantComponent {
 
   readonly orgId = computed(() => this.identityService.identity().orgId);
   readonly role = computed(() => this.identityService.identity().role);
+  readonly useCachedAi = this.demoSettings.useCachedAi;
 
   constructor(private readonly assistantService: AssistantService,
-              private readonly identityService: IdentityService) {}
+              private readonly identityService: IdentityService,
+              private readonly demoSettings: DemoSettingsService) {}
 
   sendPrompt(): void {
     if (this.isLoading()) {

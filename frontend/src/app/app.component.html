@@ -6,11 +6,20 @@
       <p class="subtitle">Sprint 2 Dashboard Shell</p>
     </div>
   </div>
-  <nav>
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
-    <a routerLink="/assistant" routerLinkActive="active">Assistant</a>
-    <a href="https://github.com/your-org/procuresense" target="_blank" rel="noreferrer">Docs</a>
-  </nav>
+  <div class="header-actions">
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a routerLink="/assistant" routerLinkActive="active">Assistant</a>
+      <a href="https://github.com/your-org/procuresense" target="_blank" rel="noreferrer">Docs</a>
+    </nav>
+    <div class="cache-toggle" [class.active]="useCachedAi()">
+      <label>
+        <input #cacheToggle type="checkbox" [checked]="useCachedAi()" (change)="toggleCachedMode(cacheToggle.checked)">
+        <span>Use cached AI</span>
+      </label>
+      <span class="indicator">Cached AI: {{ useCachedAi() ? 'ON' : 'OFF' }}</span>
+    </div>
+  </div>
 </header>
 <main>
   <router-outlet></router-outlet>

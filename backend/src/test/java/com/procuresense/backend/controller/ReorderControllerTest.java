@@ -53,7 +53,7 @@ class ReorderControllerTest {
                         OffsetDateTime.parse("2024-01-15T00:00:00Z"), 0.9, "")
         );
         when(reorderInsightService.computePredictions(anyString())).thenReturn(predictions);
-        when(reorderExplanationService.enrich(Mockito.anyList()))
+        when(reorderExplanationService.enrich(Mockito.anyList(), Mockito.anyBoolean()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         mockMvc.perform(get("/api/purchases/insights/reorders")
@@ -66,6 +66,6 @@ class ReorderControllerTest {
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)));
 
         Mockito.verify(reorderInsightService).computePredictions("demo-org-a");
-        Mockito.verify(reorderExplanationService).enrich(Mockito.anyList());
+        Mockito.verify(reorderExplanationService).enrich(Mockito.anyList(), Mockito.eq(false));
     }
 }
