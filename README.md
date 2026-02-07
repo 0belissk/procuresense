@@ -13,6 +13,11 @@ scripts/     # Helper scripts (reserved for future tooling)
 docs/        # API contract and architecture notes
 ```
 
+Additional documentation resources:
+- `docs/architecture.md` – component diagram + cross-cutting concerns
+- `docs/adr/0001-sprint0-foundation.md` – Sprint 0 architecture decisions
+- `docs/sprint-0-summary.md` – sprint goal, deliverables, and verification checklist
+
 ## Requirements (Pinned)
 
 | Tool | Version |
@@ -112,3 +117,4 @@ Every PR must answer "What changed?" and "How was it tested?" via the PR templat
 1. Flush out Sprint 1 stories on the `dev` branch using this foundation.
 2. Extend the API contract docs (`docs/api-contract.md`) as new endpoints emerge.
 3. Keep smoke tests in the README honest by updating values if datasets change.
+4. Record new ADRs/sprint notes under `docs/` so decisions remain traceable.
