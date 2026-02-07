@@ -5,6 +5,9 @@ spring:
     default: dev
   jackson:
     time-zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 logging:
   level:

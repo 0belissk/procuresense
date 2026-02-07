@@ -1,0 +1,16 @@
+order_id,sku,product_name,category,quantity,unit_price,purchased_at
+ORD-001,SKU-1001,Eco Paper Towels,Cleaning,12,12.50,2024-04-01T10:15:00Z
+ORD-001,SKU-1003,Recycled Printer Paper,Office,20,9.25,2024-04-01T10:17:00Z
+ORD-002,SKU-1002,Biodegradable Cups,Food Service,8,18.00,2024-04-02T14:05:00Z
+ORD-002,SKU-1004,Compostable Cutlery,Food Service,12,22.10,2024-04-02T14:05:00Z
+ORD-003,SKU-1007,Barcode Stickers (1k),Logistics,5,34.75,2024-04-03T08:45:00Z
+ORD-004,SKU-1005,LED Desk Lamp,Office,6,45.00,2024-04-04T11:30:00Z
+ORD-004,SKU-1012,Warehouse Gloves (10),Safety,10,27.60,2024-04-04T11:32:00Z
+ORD-005,SKU-1008,Heavy Duty Tape,Cleaning,15,15.90,2024-04-05T09:20:00Z
+ORD-005,SKU-1001,Eco Paper Towels,Cleaning,10,12.50,2024-04-05T09:22:00Z
+ORD-006,SKU-1006,Smart Labeler,Logistics,2,129.99,2024-04-06T13:40:00Z
+ORD-006,SKU-1007,Barcode Stickers (1k),Logistics,12,34.75,2024-04-06T13:41:00Z
+ORD-007,SKU-1010,Modular Storage Bin,Warehouse,9,56.40,2024-04-07T15:15:00Z
+ORD-008,SKU-1009,Shipping Crates,Logistics,1,210.00,2024-04-08T07:55:00Z
+ORD-009,SKU-1011,Hand Sanitizer 1L,Cleaning,25,11.30,2024-04-09T16:02:00Z
+ORD-009,SKU-1012,Warehouse Gloves (10),Safety,15,27.60,2024-04-09T16:06:00Z

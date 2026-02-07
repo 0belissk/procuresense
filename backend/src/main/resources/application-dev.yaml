@@ -6,13 +6,17 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
         jdbc:
           time_zone: UTC
     show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
 
 app:
   identity:
