@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: procure-sense
+  profiles:
+    default: dev
+  jackson:
+    time-zone: UTC
+
+logging:
+  level:
+    root: INFO
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+demo:
+  data:
+    products-file: file:../data/demo_products.csv
+    purchases-file: file:../data/demo_purchases.csv

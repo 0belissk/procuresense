@@ -1,0 +1,25 @@
+<section class="hero">
+  <div>
+    <p class="eyebrow">Sprint 0</p>
+    <h1>ProcureSense Health Monitor</h1>
+    <p class="lead">
+      Verify the Spring Boot API is reachable before building new features. The
+      Angular shell pings <code>/api/health</code> using the shared identity headers.
+    </p>
+    <div class="actions">
+      <button class="primary" (click)="retry()" [disabled]="isLoading()">
+        {{ isLoading() ? 'Checking…' : 'Re-check Health' }}
+      </button>
+      <span class="checked" *ngIf="lastChecked()">
+        Last checked {{ lastChecked() }}
+      </span>
+    </div>
+  </div>
+</section>
+
+<section class="status-card">
+  <div class="status-row">
+    <span class="badge" [ngClass]="statusBadgeClass()">{{ message() }}</span>
+  </div>
+  <p *ngIf="details()" class="details">{{ details() }}</p>
+</section>
