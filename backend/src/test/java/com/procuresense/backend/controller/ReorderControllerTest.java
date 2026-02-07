@@ -48,9 +48,9 @@ class ReorderControllerTest {
     void returnsPredictionsSortedAndLimited() throws Exception {
         List<ReorderPrediction> predictions = List.of(
                 new ReorderPrediction("demo-org-a", "SKU-2", "Item 2", OffsetDateTime.parse("2024-01-10T00:00:00Z"), 5,
-                        OffsetDateTime.parse("2024-01-15T00:00:00Z"), 0.8, ""),
+                        OffsetDateTime.parse("2024-01-15T00:00:00Z"), 0.8, 12, ""),
                 new ReorderPrediction("demo-org-a", "SKU-1", "Item 1", OffsetDateTime.parse("2024-01-05T00:00:00Z"), 10,
-                        OffsetDateTime.parse("2024-01-15T00:00:00Z"), 0.9, "")
+                        OffsetDateTime.parse("2024-01-15T00:00:00Z"), 0.9, 6, "")
         );
         when(reorderInsightService.computePredictions(anyString())).thenReturn(predictions);
         when(reorderExplanationService.enrich(Mockito.anyList(), Mockito.anyBoolean()))

@@ -16,6 +16,8 @@ export interface ReorderPredictionDto {
   medianDaysBetween: number;
   predictedReorderAt: string;
   confidence: number;
+  lastQuantity: number;
+  explanation?: string;
 }
 
 export interface BundleRecommendationDto {
